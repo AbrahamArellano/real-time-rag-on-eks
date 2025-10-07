@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-vllm-access
+  namespace: default 
+spec:
+  podSelector:
+    matchLabels:
+      app: eks-rag
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: vllm
+    ports:
+    - protocol: TCP
+      port: 8000

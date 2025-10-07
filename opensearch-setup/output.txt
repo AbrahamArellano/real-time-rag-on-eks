@@ -1,0 +1,241 @@
+OpenSearch Python client version: 2.8.0
+
+1 - Index info:
+{
+  "error-logs-mock": {
+    "aliases": {},
+    "mappings": {
+      "properties": {
+        "correlation_id": {
+          "type": "keyword"
+        },
+        "error_code": {
+          "type": "keyword"
+        },
+        "level": {
+          "type": "keyword"
+        },
+        "message": {
+          "type": "text"
+        },
+        "message_embedding": {
+          "type": "knn_vector",
+          "dimension": 1024,
+          "method": {
+            "engine": "faiss",
+            "space_type": "l2",
+            "name": "hnsw",
+            "parameters": {}
+          }
+        },
+        "metadata": {
+          "properties": {
+            "environment": {
+              "type": "keyword"
+            },
+            "region": {
+              "type": "keyword"
+            },
+            "version": {
+              "type": "keyword"
+            }
+          }
+        },
+        "service": {
+          "type": "keyword"
+        },
+        "stack_trace": {
+          "type": "text"
+        },
+        "timestamp": {
+          "type": "date"
+        },
+        "user_id": {
+          "type": "keyword"
+        }
+      }
+    },
+    "settings": {
+      "index": {
+        "number_of_shards": "2",
+        "provided_name": "error-logs-mock",
+        "knn": "true",
+        "creation_date": "1741534000092",
+        "number_of_replicas": "0",
+        "uuid": "r0mDe5UBA0PAOgid8wOm",
+        "version": {
+          "created": "136327827"
+        }
+      }
+    }
+  }
+}
+
+2 - Index mapping:
+{
+  "error-logs-mock": {
+    "mappings": {
+      "properties": {
+        "correlation_id": {
+          "type": "keyword"
+        },
+        "error_code": {
+          "type": "keyword"
+        },
+        "level": {
+          "type": "keyword"
+        },
+        "message": {
+          "type": "text"
+        },
+        "message_embedding": {
+          "type": "knn_vector",
+          "dimension": 1024,
+          "method": {
+            "engine": "faiss",
+            "space_type": "l2",
+            "name": "hnsw",
+            "parameters": {}
+          }
+        },
+        "metadata": {
+          "properties": {
+            "environment": {
+              "type": "keyword"
+            },
+            "region": {
+              "type": "keyword"
+            },
+            "version": {
+              "type": "keyword"
+            }
+          }
+        },
+        "service": {
+          "type": "keyword"
+        },
+        "stack_trace": {
+          "type": "text"
+        },
+        "timestamp": {
+          "type": "date"
+        },
+        "user_id": {
+          "type": "keyword"
+        }
+      }
+    }
+  }
+}
+
+3 - Document count:
+{
+  "count": 961,
+  "_shards": {
+    "total": 0,
+    "successful": 0,
+    "skipped": 0,
+    "failed": 0
+  }
+}
+
+4 - Basic search for 'timeout' (showing first 3 results):
+{
+  "total_hits": 174,
+  "max_score": 1.951194,
+  "took_ms": 13,
+  "results": [
+    {
+      "score": 1.951194,
+      "message": "Payment timeout",
+      "service": "payment-service",
+      "error_code": "PAY_003",
+      "timestamp": "2025-03-02T05:43:08.675729Z"
+    },
+    {
+      "score": 1.951194,
+      "message": "Payment timeout",
+      "service": "payment-service",
+      "error_code": "PAY_003",
+      "timestamp": "2025-03-02T16:34:08.675729Z"
+    },
+    {
+      "score": 1.951194,
+      "message": "Payment timeout",
+      "service": "payment-service",
+      "error_code": "PAY_003",
+      "timestamp": "2025-03-02T18:21:08.675729Z"
+    }
+  ]
+}
+
+5 - Vector search test:
+{
+  "took": 17,
+  "timed_out": false,
+  "_shards": {
+    "total": 0,
+    "successful": 0,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": {
+      "value": 42,
+      "relation": "eq"
+    },
+    "max_score": 0.5864989,
+    "hits": [
+      {
+        "_index": "error-logs-mock",
+        "_id": "1%3A0%3Am_mEe5UBlRXZMGedqwkR",
+        "_score": 0.5864989,
+        "_source": {
+          "service": "payment-service",
+          "error_code": "PAY_003",
+          "message": "Payment timeout"
+        }
+      },
+      {
+        "_index": "error-logs-mock",
+        "_id": "1%3A0%3A8u6Ee5UBdKTw6WAwwCrY",
+        "_score": 0.5864989,
+        "_source": {
+          "service": "payment-service",
+          "error_code": "PAY_003",
+          "message": "Payment timeout"
+        }
+      },
+      {
+        "_index": "error-logs-mock",
+        "_id": "1%3A0%3AuPmEe5UBlRXZMGed5glG",
+        "_score": 0.5864989,
+        "_source": {
+          "service": "payment-service",
+          "error_code": "PAY_003",
+          "message": "Payment timeout"
+        }
+      },
+      {
+        "_index": "error-logs-mock",
+        "_id": "1%3A0%3ABu6Ee5UBdKTw6WAw6Ssl",
+        "_score": 0.5864989,
+        "_source": {
+          "service": "payment-service",
+          "error_code": "PAY_003",
+          "message": "Payment timeout"
+        }
+      },
+      {
+        "_index": "error-logs-mock",
+        "_id": "1%3A0%3AwfmEe5UBlRXZMGed-AkQ",
+        "_score": 0.5864989,
+        "_source": {
+          "service": "payment-service",
+          "error_code": "PAY_003",
+          "message": "Payment timeout"
+        }
+      }
+    ]
+  }
+}

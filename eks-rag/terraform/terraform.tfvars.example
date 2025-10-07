@@ -1,0 +1,26 @@
+# EKS Cluster Configuration
+cluster_name = "trainium-inferentia"
+aws_region   = "us-west-2"
+
+# Kubernetes Configuration
+namespace            = "default"
+service_account_name = "eks-rag-sa"
+
+# OpenSearch Configuration
+collection_name         = "error-logs-mock"
+allow_public_opensearch = true
+
+# vLLM Configuration
+vllm_service_name = "vllm-llama3-inf2-serve-svc"
+vllm_namespace    = "vllm"
+vllm_port         = 8000
+
+# Deployment Configuration
+replicas = 2
+
+# ECR Configuration
+ecr_repository_name = "advanced-rag-mloeks/eks-rag"
+
+# Path Configuration (relative to terraform directory)
+docker_build_context    = ".."
+opensearch_scripts_path = "../../opensearch-setup"

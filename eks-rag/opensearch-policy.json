@@ -1,0 +1,20 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "aoss:*"  // All OpenSearch Serverless actions
+            ],
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "aoss:APIAccessAll",
+                "aoss:DashboardsAccessAll"
+            ],
+            "Resource": "arn:aws:aoss:*:*:collection/*"  // All collections in all regions
+        }
+    ]
+}
