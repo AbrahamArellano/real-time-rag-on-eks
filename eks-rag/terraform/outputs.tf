@@ -54,6 +54,66 @@ output "ui_url" {
   value       = "http://${module.ui.alb_hostname}"
 }
 
+# Friendly deployment summary
+output "deployment_summary" {
+  description = "Deployment summary and next steps"
+  value = <<-EOT
+
+  ╔════════════════════════════════════════════════════════════════════════════════╗
+  ║                     🎉 DEPLOYMENT SUCCESSFUL!                                  ║
+  ╚════════════════════════════════════════════════════════════════════════════════╝
+
+  📊 DEPLOYMENT STATUS:
+  ────────────────────────────────────────────────────────────────────────────────
+  ✅ RAG Backend:     ${module.kubernetes.service_endpoint}
+  ✅ OpenSearch:      ${module.opensearch.collection_endpoint}
+  ✅ Kinesis Stream:  ${module.kinesis.stream_name}
+  ✅ Lambda Producer: ${module.lambda_producer.lambda_function_name} (logs every minute)
+  ✅ Lambda Consumer: ${module.lambda_consumer.lambda_function_name} (indexes to OpenSearch)
+
+  🌐 GRADIO UI ACCESS:
+  ────────────────────────────────────────────────────────────────────────────────
+  URL: http://${module.ui.alb_hostname}
+
+  ${length(module.ui.alb_hostname) > 0 ? "✅ ALB is ready! Open the URL above in your browser." : "⏳ ALB provisioning (2-4 minutes). Check status with:\n     kubectl get ingress gradio-app-ingress"}
+
+  📝 NEXT STEPS:
+  ────────────────────────────────────────────────────────────────────────────────
+  1. Access the UI:
+     open http://${module.ui.alb_hostname}
+
+  2. Monitor Lambda indexing (should see logs every minute):
+     aws logs tail /aws/lambda/vehicle-log-consumer --region ${var.aws_region} --follow
+
+  3. Check OpenSearch document count (increases ~100/min):
+     awscurl --service aoss --region ${var.aws_region} \
+       -X GET "https://${module.opensearch.collection_endpoint}/error-logs-mock/_count"
+
+  4. Test these queries in the UI:
+     • "Show me critical engine temperature alerts"
+     • "What battery issues occurred in the last 2 hours?"
+     • "Show vehicles with engine errors in the last day"
+
+  🔍 VERIFICATION COMMANDS:
+  ────────────────────────────────────────────────────────────────────────────────
+  # Check RAG backend pods
+  kubectl get pods -l app=eks-rag
+
+  # Check Gradio UI pods
+  kubectl get pods -l app=gradio-app
+
+  # Check ALB ingress status
+  kubectl get ingress gradio-app-ingress
+
+  🧹 CLEANUP:
+  ────────────────────────────────────────────────────────────────────────────────
+  To destroy all resources:
+    cd eks-rag/terraform && terraform destroy
+
+  ════════════════════════════════════════════════════════════════════════════════
+  EOT
+}
+
 output "kinesis_stream_arn" {
   description = "ARN of the Kinesis Data Stream"
   value       = module.kinesis.stream_arn

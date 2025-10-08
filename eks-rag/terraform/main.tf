@@ -218,3 +218,60 @@ module "ui" {
     null_resource.docker_build_push_ui
   ]
 }
+
+# Print deployment summary after everything is complete
+resource "null_resource" "print_summary" {
+  triggers = {
+    always_run = timestamp()
+  }
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      echo ""
+      echo "╔════════════════════════════════════════════════════════════════════════════════╗"
+      echo "║                     🎉 DEPLOYMENT SUCCESSFUL!                                  ║"
+      echo "╚════════════════════════════════════════════════════════════════════════════════╝"
+      echo ""
+      echo "📊 DEPLOYMENT STATUS:"
+      echo "────────────────────────────────────────────────────────────────────────────────"
+      echo "✅ RAG Backend:     ${module.kubernetes.service_endpoint}"
+      echo "✅ OpenSearch:      ${module.opensearch.collection_endpoint}"
+      echo "✅ Kinesis Stream:  ${module.kinesis.stream_name}"
+      echo "✅ Lambda Producer: ${module.lambda_producer.lambda_function_name}"
+      echo "✅ Lambda Consumer: ${module.lambda_consumer.lambda_function_name}"
+      echo ""
+      echo "🌐 GRADIO UI ACCESS:"
+      echo "────────────────────────────────────────────────────────────────────────────────"
+      echo "⏳ ALB is provisioning (2-4 minutes)..."
+      echo ""
+      echo "To check ALB status:"
+      echo "  kubectl get ingress gradio-app-ingress"
+      echo ""
+      echo "Once ready, get URL with:"
+      echo "  terraform output ui_url"
+      echo ""
+      echo "Or watch for ALB:"
+      echo "  watch kubectl get ingress gradio-app-ingress"
+      echo ""
+      echo "📝 NEXT STEPS:"
+      echo "────────────────────────────────────────────────────────────────────────────────"
+      echo "1. Wait for ALB (2-4 minutes)"
+      echo "2. Access UI: terraform output ui_url"
+      echo "3. Monitor indexing: aws logs tail /aws/lambda/vehicle-log-consumer --region ${var.aws_region} --follow"
+      echo ""
+      echo "For full deployment summary:"
+      echo "  terraform output deployment_summary"
+      echo ""
+      echo "════════════════════════════════════════════════════════════════════════════════"
+      echo ""
+    EOT
+  }
+
+  depends_on = [
+    module.ui,
+    module.kubernetes,
+    module.lambda_consumer,
+    module.lambda_producer,
+    null_resource.update_opensearch_policy
+  ]
+}
