@@ -3,11 +3,6 @@ variable "cluster_name" {
   type        = string
 }
 
-variable "cluster_oidc_issuer_url" {
-  description = "EKS cluster OIDC issuer URL"
-  type        = string
-}
-
 variable "namespace" {
   description = "Kubernetes namespace"
   type        = string

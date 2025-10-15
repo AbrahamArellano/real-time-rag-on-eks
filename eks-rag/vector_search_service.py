@@ -69,9 +69,21 @@ try:
     
     if collections:
         collection_id = collections[0]['id']
+        logger.info(f"Found collection ID: {collection_id}")
         collection_details = os_serverless.batch_get_collection(ids=[collection_id])
-        endpoint = collection_details['collectionDetails'][0]['collectionEndpoint']
+
+        if not collection_details.get('collectionDetails'):
+            raise Exception(f"No collection details returned for ID: {collection_id}")
+
+        collection = collection_details['collectionDetails'][0]
+        logger.info(f"Collection status: {collection.get('status')}, Type: {collection.get('type')}")
+
+        if 'collectionEndpoint' not in collection:
+            raise Exception(f"Collection endpoint not available. Status: {collection.get('status')}, Collection: {collection}")
+
+        endpoint = collection['collectionEndpoint']
         endpoint = endpoint.replace('https://', '')
+        logger.info(f"Using OpenSearch endpoint: {endpoint}")
         
         # Create OpenSearch client with the custom connection class
         # No need to create AWS4Auth here as it's handled by the connection class
@@ -160,6 +172,62 @@ def generate_embedding(text):
         logger.error(f"Error generating embedding: {e}")
         return None
 
+def ensure_opensearch_client():
+    """
+    Lazy initialization of OpenSearch client with retry logic.
+    Handles case where collection is still CREATING at pod startup.
+    """
+    global opensearch_client
+
+    if opensearch_client is not None:
+        return opensearch_client
+
+    try:
+        logger.info("Attempting to initialize OpenSearch client...")
+        os_serverless = boto3.client('opensearchserverless', region_name='us-west-2')
+        collections = os_serverless.list_collections(
+            collectionFilters={'name': 'error-logs-mock'}
+        )['collectionSummaries']
+
+        if not collections:
+            raise Exception("Collection 'error-logs-mock' not found")
+
+        collection_id = collections[0]['id']
+        logger.info(f"Found collection ID: {collection_id}")
+        collection_details = os_serverless.batch_get_collection(ids=[collection_id])
+
+        if not collection_details.get('collectionDetails'):
+            raise Exception(f"No collection details returned for ID: {collection_id}")
+
+        collection = collection_details['collectionDetails'][0]
+        logger.info(f"Collection status: {collection.get('status')}, Type: {collection.get('type')}")
+
+        if 'collectionEndpoint' not in collection:
+            raise Exception(f"Collection endpoint not available yet. Status: {collection.get('status')}. Collection is still provisioning, will retry on next request.")
+
+        endpoint = collection['collectionEndpoint']
+        endpoint = endpoint.replace('https://', '')
+        logger.info(f"Using OpenSearch endpoint: {endpoint}")
+
+        opensearch_client = OpenSearch(
+            hosts=[{'host': endpoint, 'port': 443}],
+            use_ssl=True,
+            verify_certs=True,
+            timeout=30,
+            retry_on_timeout=True,
+            max_retries=3,
+            connection_class=lambda **kwargs: RefreshingAWS4AuthConnection(
+                region='us-west-2',
+                service='aoss',
+                **kwargs
+            )
+        )
+        logger.info("OpenSearch client initialized successfully")
+        return opensearch_client
+    except Exception as e:
+        logger.warning(f"OpenSearch client initialization attempt failed: {e}")
+        return None
+
 def vector_search(embedding, k=5, date_filter=None):
     """
     Search for similar vectors in OpenSearch with optional date filtering.
@@ -173,6 +241,10 @@ def vector_search(embedding, k=5, date_filter=None):
         list: Search results
     """
     try:
+        # Ensure OpenSearch client is initialized (lazy init with retry)
+        client = ensure_opensearch_client()
+        if client is None:
+            raise Exception("OpenSearch client not available. Collection may still be provisioning.")
         # Base query structure
         base_source = [
             "timestamp",
@@ -228,7 +300,7 @@ def vector_search(embedding, k=5, date_filter=None):
 
         logger.info(f"Executing vector search with query: {json.dumps(search_query, indent=2)}")
 
-        response = opensearch_client.search(
+        response = client.search(
             index='error-logs-mock',
             body=search_query
         )

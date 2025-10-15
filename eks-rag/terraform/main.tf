@@ -27,16 +27,15 @@ module "ecr" {
   aws_region      = var.aws_region
 }
 
-# Module 2: IAM (IRSA) - Create role first without OpenSearch ARN
+# Module 2: IAM (Pod Identity)
 module "iam" {
   source = "./modules/iam"
 
-  cluster_name            = var.cluster_name
-  cluster_oidc_issuer_url = data.aws_eks_cluster.cluster.identity[0].oidc[0].issuer
-  namespace               = var.namespace
-  service_account_name    = var.service_account_name
-  aws_region              = var.aws_region
-  account_id              = local.account_id
+  cluster_name         = var.cluster_name
+  namespace            = var.namespace
+  service_account_name = var.service_account_name
+  aws_region           = var.aws_region
+  account_id           = local.account_id
 }
 
 # Module 3: OpenSearch Serverless - Uses IAM role ARN
@@ -78,10 +77,9 @@ resource "null_resource" "docker_build_push" {
 module "kubernetes" {
   source = "./modules/kubernetes"
 
-  namespace                = var.namespace
-  service_account_name     = var.service_account_name
-  service_account_role_arn = module.iam.role_arn
-  ecr_image_url            = "${module.ecr.repository_url}:latest"
+  namespace            = var.namespace
+  service_account_name = var.service_account_name
+  ecr_image_url        = "${module.ecr.repository_url}:latest"
   vllm_service_host        = local.vllm_host
   vllm_service_port        = var.vllm_port
   vllm_namespace           = var.vllm_namespace

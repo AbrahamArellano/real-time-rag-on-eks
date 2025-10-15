@@ -8,11 +8,6 @@ variable "service_account_name" {
   type        = string
 }
 
-variable "service_account_role_arn" {
-  description = "IAM role ARN to annotate on the service account"
-  type        = string
-}
-
 variable "ecr_image_url" {
   description = "Full ECR image URL with tag"
   type        = string

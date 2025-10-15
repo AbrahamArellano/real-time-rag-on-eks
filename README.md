@@ -17,6 +17,10 @@ This Terraform configuration provides automated end-to-end deployment of a **rea
 
 ## System Architecture
 
+![Architecture Diagram](image/architecture-diagram.png)
+
+### Detailed Architecture Flow
+
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                           REAL-TIME DATA PIPELINE                            │

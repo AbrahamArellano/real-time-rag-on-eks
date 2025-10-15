@@ -1,8 +1,7 @@
 data "aws_caller_identity" "current" {}
 
 locals {
-  account_id    = data.aws_caller_identity.current.account_id
-  oidc_provider = replace(var.cluster_oidc_issuer_url, "https://", "")
+  account_id = data.aws_caller_identity.current.account_id
 }
 
 # IAM Policy for Bedrock access
@@ -52,7 +51,7 @@ resource "aws_iam_policy" "opensearch_policy" {
   })
 }
 
-# IAM Role for Service Account (IRSA)
+# IAM Role for Service Account (Pod Identity)
 resource "aws_iam_role" "eks_rag_sa" {
   name = "eks-rag-sa-role-${var.cluster_name}"
 
@@ -62,15 +61,12 @@ resource "aws_iam_role" "eks_rag_sa" {
       {
         Effect = "Allow"
         Principal = {
-          Federated = "arn:aws:iam::${local.account_id}:oidc-provider/${local.oidc_provider}"
+          Service = "pods.eks.amazonaws.com"
         }
-        Action = "sts:AssumeRoleWithWebIdentity"
-        Condition = {
-          StringEquals = {
-            "${local.oidc_provider}:sub" = "system:serviceaccount:${var.namespace}:${var.service_account_name}"
-            "${local.oidc_provider}:aud" = "sts.amazonaws.com"
-          }
-        }
+        Action = [
+          "sts:AssumeRole",
+          "sts:TagSession"
+        ]
       }
     ]
   })
@@ -92,4 +88,16 @@ resource "aws_iam_role_policy_attachment" "bedrock_attach" {
 resource "aws_iam_role_policy_attachment" "opensearch_attach" {
   role       = aws_iam_role.eks_rag_sa.name
   policy_arn = aws_iam_policy.opensearch_policy.arn
+}
+
+# EKS Pod Identity Association
+resource "aws_eks_pod_identity_association" "eks_rag" {
+  cluster_name    = var.cluster_name
+  namespace       = var.namespace
+  service_account = var.service_account_name
+  role_arn        = aws_iam_role.eks_rag_sa.arn
+
+  tags = {
+    Name = "eks-rag-pod-identity"
+  }
 }
