@@ -373,24 +373,3 @@ aws logs tail /aws/lambda/vehicle-log-consumer --filter-pattern "ERROR"
 
 This project is part of the Advanced RAG on EKS platform demonstration.
 
----
-
-## Changelog
-
-### v2.1 - January 2025
-- ✅ Migrated from IRSA to EKS Pod Identity
-- ✅ Added lazy OpenSearch client initialization
-- ✅ Fixed collection provisioning timing issues
-- ✅ Updated architecture diagram
-
-### v2.0 - January 2025
-- ✅ Added temporal query filtering ("last N hours/days/weeks/months")
-- ✅ Added current datetime context to LLM
-- ✅ Added timestamp field to search results
-- ✅ Fixed OpenSearch index creation (awscurl)
-
-### v1.0 - December 2024
-- Initial release with RAG pipeline
-- Lambda producer/consumer
-- OpenSearch Serverless integration
-- Gradio UI with ALB
